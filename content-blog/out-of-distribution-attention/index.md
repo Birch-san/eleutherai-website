@@ -37,15 +37,15 @@ On inspection, it seems so:
     <thead>
       <th>200x200</th>
       <th>256x256</th>
-      <th>512x512</th>
+      <th>512x512 *</th>
       <th>768x768</th>
     </thead>
     <tbody>
       <tr>
-        <td><img src="./images/00295.715317074.sd1.5.regular200.png" width="175px" alt="Completely destroyed image; just garish stripes" /></td>
-        <td><img src="./images/00285.715317074.sd1.5.regular256.png" width="175px" alt="Substantially damaged image; garish, over-exposed. A low-detail person stands in front of a hill." /></td>
-        <td><img src="./images/00265.715317074.sd1.5.regular512.png" width="175px" alt="Detailed 3D render of a vaporwave shrine maiden." /></td>
-        <td><img src="./images/00275.715317074.sd1.5.regular768.png" width="175px" alt="Two shrine maidens melding into one." /></td>
+        <td>{{<linked-img src="./images/00295.715317074.sd1.5.regular200.png" width="175px" alt="Completely destroyed image; just garish stripes">}}</td>
+        <td>{{<linked-img src="./images/00285.715317074.sd1.5.regular256.png" width="175px" alt="Substantially damaged image; garish, over-exposed. A low-detail person stands in front of a hill." >}}</td>
+        <td>{{<linked-img src="./images/00265.715317074.sd1.5.regular512.png" width="175px" alt="Detailed 3D render of a vaporwave shrine maiden." >}}</td>
+        <td>{{<linked-img src="./images/00275.715317074.sd1.5.regular768.png" width="175px" alt="Two shrine maidens melding into one." >}}</td>
       </tr>
     </tbody>
   </table>

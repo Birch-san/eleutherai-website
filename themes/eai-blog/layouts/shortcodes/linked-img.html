@@ -1,0 +1,6 @@
+<a href="{{ .Get "src" }}">
+  <img src="{{ .Get "src" }}"
+    {{ with .Get "width" }} width="{{ . }}"{{ end }}
+    {{ with .Get "alt" }} alt="{{ . }}"{{ end }}
+  />
+</a>
