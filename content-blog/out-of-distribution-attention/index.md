@@ -73,11 +73,15 @@ details[open] > summary {
 .hidden {
   display: none;
 }
+
+h4 {
+  font-weight: lighter;
+}
 </style>
 
 Does a diffusion model require retraining to generate images smaller or larger than those in its training set?
 
-On inspection, it seems so:
+On inspection of <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable-diffusion</a> 1.5, it seems so:
 
 <figure class="table-fig">
   <table class="no-border-bottom">
@@ -100,20 +104,26 @@ On inspection, it seems so:
   </table>
   <figcaption>
     Optimal = 512. Smaller = deep-fried. Larger = duplication of body parts
-    <div class="subcaption">Images generated with stable-diffusion 1.5</div>
   </figcaption>
 </figure>
 
+<details>
+  <summary><em>Background: how does stable-diffusion generate images?</em></summary>
+  <p>
+    Stable-diffusion is a <a href="https://arxiv.org/abs/2112.10752">latent diffusion</a> model. Where a typical diffusion model removes noise from noised <em>pixels</em>: latent diffusion models remove noise from noised <em>latents</em> — a <em>learned downsample</em> of pixels. This reduces the dimensionality of the denoising problem.
+  </p>
+  <p>
+    To produce a 512x512 image:
+  </p>
+  <ul>
+    <li>We start by generating 64x64, 4-channel noise (noised latents).</li>
+    <li>The Unet (and our ODE solver) iteratively remove portions of the noise from these noised latents, until we have fully-denoised latents.</li>
+    <li>We pass our latents to the <abbr title="Variational Autoencoder">VAE</abbr> decoder, which upsamples them to a 512x512 RGB image.</li>
+  </ul>
+</details>
 <p>
-  <details>
-    <summary>Stable-diffusion 1.x was trained on 512x512 images, encoded as 64x64 latents.</summary>
-    <p>
-      Stable-diffusion is a <em>latent diffusion</em> model.<br>
-      It removes noise from noised <em>latents</em> (as opposed to pixels). We start with 100% noise, and iteratively remove noise until we have completely denoised latents.<br>
-      A <abbr title="Variational Autoencoder">VAE</abbr> is then used to decode these latents back into pixels.<br>
-      <small>Latents are (moreorless) a learned resample of pixels. Stable-diffusion downsamples the image area by 8x in each dimension, but resamples RGB onto 4 channels.</small>
-    </p>
-  </details>
+  Stable-diffusion 1.5 was <a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">trained primarily* to generate 512x512 images</a>.<br>
+  <small>*SD1.5 is descended from SD1.1, which was trained to generate 256² images.</small>
 </p>
 
 <p class="tight-to-figure">
@@ -126,11 +136,11 @@ On inspection, it seems so:
   <table class="no-border-bottom">
     <tbody>
       <tr>
-        <td>
+        <!-- <td>
           Decoder:<br>
           <label><input type="radio" name="768-decoder" value="VAE" checked>VAE</label><br>
           <label><input type="radio" name="768-decoder" value="approx">Approx</label>
-        </td>
+        </td> -->
         <td>{{<linked-img src="./images/768/vae/00368.86322125.sd1.5.regular768.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/768/vae/00369.340323845.sd1.5.regular768.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/768/vae/00370.340323845.sd1.5.regular768.png" width="75px" >}}</td>
@@ -185,7 +195,7 @@ On inspection, it seems so:
 </figure>
 
 <p class="tight-to-figure">
-  <strong>256²</strong> images seem to be detail-impaired but don't make the same composition mistakes:
+  <strong>256²</strong> images are detail-impaired but don't make the same composition mistakes:
 </p>
 
 <!-- <small><label class="toggle"><input type="checkbox" id="approx-256">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.</small> -->
@@ -194,11 +204,11 @@ On inspection, it seems so:
   <table class="no-border-bottom">
     <tbody>
       <tr>
-        <td>
+        <!-- <td>
           Decoder:<br>
           <label><input type="radio" name="256-decoder" value="VAE" checked>VAE</label><br>
           <label><input type="radio" name="256-decoder" value="approx">Approx</label>
-        </td>
+        </td> -->
         <td>{{<linked-img src="./images/256/vae/00307.436376137.sd1.5.regular256.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/256/vae/00308.436376137.sd1.5.regular256.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/256/vae/00310.580263270.sd1.5.regular256.png" width="75px" >}}</td>
@@ -224,12 +234,96 @@ On inspection, it seems so:
     256x256 samples: correctly-composed, but detail-impaired.
     <div class="subcaption">
       <label class="toggle"><input type="checkbox" id="approx-256">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.
-    </div>
-  </figcaption> -->
+    </div> 
+  </figcaption>-->
 </figure>
 
-What makes it perform poorly at different image sizes?  
-Is there any part of the diffusion model which is sensitive to image dimensions, sequence length, or distance between features?
+<p>
+  What makes stable-diffusion perform poorly at non-512² image sizes?
+</p>
+<!-- Is it sensitive to image dimensions, sequence length, or distance between features? -->
+
+<h3><abbr title="Variational Autoencoder">VAE</abbr> decoder?</h3>
+
+<!-- <details>
+  <summary><em>Background: what is the role of the <abbr title="Variational Autoencoder">VAE</abbr> decoder in latent diffusion?</em></summary>
+  <p>
+    Stable-diffusion is a <a href="https://arxiv.org/abs/2112.10752">latent diffusion</a> model. Where a typical diffusion model removes noise from noised <em>pixels</em>: latent diffusion models remove noise from noised <em>latents</em> — a <em>learned downsample</em> of pixels. This reduces the dimensionality of the denoising problem.
+  </p>
+  <p>
+    To produce a 512x512 image:
+  </p>
+  <ul>
+    <li>We start by generating 64x64, 4-channel noise (noised latents).</li>
+    <li>The Unet (and our ODE solver) iteratively remove portions of the noise from these noised latents, until we have fully-denoised latents.</li>
+    <li>We pass our latents to the <abbr title="Variational Autoencoder">VAE</abbr> decoder, which upsamples them to a 512x512 RGB image.</li>
+  </ul>
+</details> -->
+<p>
+  Perhaps deformities and detail loss occur during when the <abbr title="Variational Autoencoder">VAE</abbr> decoder upsamples the image? Part of its job is to invent new detail; maybe it does this poorly for image sizes outside of its training distribution?
+</p>
+<p>
+  Granted, 256² images <em>might well be</em> in the SD1.5 <abbr title="Variational Autoencoder">VAE</abbr>'s training distribution:
+</p>
+<ul>
+  <li>
+    SD1.1 was trained on <a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">256²</a> images
+    <ul>
+      <li><small>it's unclear whether this refers to the Unet or the <abbr title="Variational Autoencoder">VAE</abbr>.</small></li>
+    </ul>
+  </li>
+  <li>
+    SD's 1.4-era <a href="https://huggingface.co/stabilityai/sd-vae-ft-mse">improved <abbr title="Variational Autoencoder">VAE</abbr>s</a> were <em>evaluated</em> against 256² images
+    <ul>
+      <li><small>it's unclear what size images they were <em>trained</em> on, or whether SD1.5's <abbr title="Variational Autoencoder">VAE</abbr> is derived from them.</small></li>
+    </ul>
+  </li>
+</ul>
+<p>
+  Regardless: we can verify whether this an SD1.5 <abbr title="Variational Autoencoder">VAE</abbr> problem, by decoding the latents <em>without</em> SD1.5's <abbr title="Variational Autoencoder">VAE</abbr>.
+</p>
+
+<h4>Decoding latents with an approximate decoder</h4>
+<p>
+  I distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The approximate decoder's model architecture is simple:
+</p>
+
+```python
+from torch.nn import Module, Linear, SiLU
+from torch import FloatTensor
+
+class Decoder(Module):
+  def __init__(self, inner_dim = 12) -> None:
+    super().__init__()
+    self.in_proj = Linear(4, inner_dim)
+    self.nonlin0 = SiLU()
+    self.hidden_layer = Linear(inner_dim, inner_dim)
+    self.nonlin1 = SiLU()
+    self.out_proj = Linear(inner_dim, 3)
+  
+  def forward(self, sample: FloatTensor) -> FloatTensor:
+    sample = self.in_proj(sample)
+    sample = self.nonlin0(sample)
+    sample = self.hidden(sample)
+    sample = self.nonlin1(sample)
+    sample = self.out_proj(sample)
+    return sample
+```
+
+<p>This decoder:</p>
+<ul>
+  <li>
+    <strong>only</strong> does colour-space conversion (latent channels to RGB)
+    <ul>
+      <li><small>does <strong>not</strong> upsample / create new details</small></li>
+    </ul>
+  </li>
+  <li>decodes pixels <em>independently</em> of each other
+    <ul>
+      <li><small>is <strong>not</strong> sensitive to sequence length</small></li>
+    </ul>
+  </li>
+</ul>
 
 <h3>Convolutions?</h3>
 
@@ -285,7 +379,7 @@ It's not enough to explain why <em>small</em> images get deep-fried. If the goal
 
 
 <script>
-  const checkboxIDs = ['baseline-512']; // ['approx-768', 'baseline-512', 'approx-256'];
+  const checkboxIDs = ['baseline-512'];//, 'approx-768', 'approx-256'];
   for (const checkboxID of checkboxIDs) {
     const targetID = `${checkboxID}-target`;
     document.getElementById(checkboxID).addEventListener('change', (event) => {
