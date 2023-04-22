@@ -57,6 +57,9 @@ details[open] > summary {
   list-style-type: "[−] ";
   margin-bottom: 0;
 }
+details.margin-bottom {
+  margin-bottom: 1em;
+}
 
 .toggle {
   color: lightcoral;
@@ -81,7 +84,7 @@ h4 {
 
 Does a diffusion model require retraining to generate images smaller or larger than those in its training set?
 
-On inspection of <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable-diffusion</a> 1.5, it seems so:
+It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable-diffusion</a> 1.5:
 
 <figure class="table-fig">
   <table class="no-border-bottom">
@@ -103,7 +106,7 @@ On inspection of <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable
     </tbody>
   </table>
   <figcaption>
-    Optimal = 512. Smaller = deep-fried. Larger = duplication of body parts
+    512² = Optimal. Smaller = deep-fried. Larger = duplication of body parts
   </figcaption>
 </figure>
 
@@ -195,7 +198,7 @@ On inspection of <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable
 </figure>
 
 <p class="tight-to-figure">
-  <strong>256²</strong> images are detail-impaired but don't make the same composition mistakes:
+  <strong>256²</strong> images lack detail and have odd colours, but have reasonable composition:
 </p>
 
 <!-- <small><label class="toggle"><input type="checkbox" id="approx-256">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.</small> -->
@@ -262,31 +265,30 @@ On inspection of <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">stable
 <p>
   Perhaps deformities and detail loss occur during when the <abbr title="Variational Autoencoder">VAE</abbr> decoder upsamples the image? Part of its job is to invent new detail; maybe it does this poorly for image sizes outside of its training distribution?
 </p>
+<details class="margin-bottom">
+  <summary>Well, 256² images might actually be in-distribution for SD1.5's <abbr title="Variational Autoencoder">VAE</abbr>.</summary>
+  <ul>
+    <li>
+      SD1.1 was trained on <a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">256²</a> images
+      <ul>
+        <li><small>it's unclear whether this refers to the Unet or the <abbr title="Variational Autoencoder">VAE</abbr>.</small></li>
+      </ul>
+    </li>
+    <li>
+      SD's 1.4-era <a href="https://huggingface.co/stabilityai/sd-vae-ft-mse">improved <abbr title="Variational Autoencoder">VAE</abbr>s</a> were <em>evaluated</em> against 256² images
+      <ul>
+        <li><small>it's unclear what size images they were <em>trained</em> on, or whether SD1.5's <abbr title="Variational Autoencoder">VAE</abbr> is derived from them.</small></li>
+      </ul>
+    </li>
+  </ul>
+</details>
 <p>
-  Granted, 256² images <em>might well be</em> in the SD1.5 <abbr title="Variational Autoencoder">VAE</abbr>'s training distribution:
-</p>
-<ul>
-  <li>
-    SD1.1 was trained on <a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">256²</a> images
-    <ul>
-      <li><small>it's unclear whether this refers to the Unet or the <abbr title="Variational Autoencoder">VAE</abbr>.</small></li>
-    </ul>
-  </li>
-  <li>
-    SD's 1.4-era <a href="https://huggingface.co/stabilityai/sd-vae-ft-mse">improved <abbr title="Variational Autoencoder">VAE</abbr>s</a> were <em>evaluated</em> against 256² images
-    <ul>
-      <li><small>it's unclear what size images they were <em>trained</em> on, or whether SD1.5's <abbr title="Variational Autoencoder">VAE</abbr> is derived from them.</small></li>
-    </ul>
-  </li>
-</ul>
-<p>
-  Regardless: we can verify whether this an SD1.5 <abbr title="Variational Autoencoder">VAE</abbr> problem, by decoding the latents <em>without</em> SD1.5's <abbr title="Variational Autoencoder">VAE</abbr>.
+  Let's eliminate the <abbr title="Variational Autoencoder">VAE</abbr> altogether. Is there another way to decode the latents, which we trust to not be sensitive to sequence length?
 </p>
 
 <h4>Decoding latents with an approximate decoder</h4>
-<p>
-  I distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The approximate decoder's model architecture is simple:
-</p>
+<details class="margin-bottom">
+  <summary>I distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The model architecture is just 3 dense layers.</summary>
 
 ```python
 from torch.nn import Module, Linear, SiLU
@@ -309,43 +311,121 @@ class Decoder(Module):
     sample = self.out_proj(sample)
     return sample
 ```
+</details>
 
-<p>This decoder:</p>
-<ul>
-  <li>
-    <strong>only</strong> does colour-space conversion (latent channels to RGB)
-    <ul>
-      <li><small>does <strong>not</strong> upsample / create new details</small></li>
-    </ul>
-  </li>
-  <li>decodes pixels <em>independently</em> of each other
-    <ul>
-      <li><small>is <strong>not</strong> sensitive to sequence length</small></li>
-    </ul>
-  </li>
-</ul>
+<details class="margin-bottom">
+  <summary>This decoder is not sensitive to sequence length.</summary>
+  <ul>
+    <li>
+      <strong>Only</strong> does colour-space conversion (latent channels to RGB)
+      <ul>
+        <li><small>does <strong>not</strong> upsample / create new details</small></li>
+      </ul>
+    </li>
+    <li>Decodes pixels <em>independently</em> of each other</li>
+  </ul>
+</details>
+
+<p>
+  <small>We use 8x nearest-neighbour upsample to match <abbr title="Variational Autoencoder">VAE</abbr> output size without interpolating details.</small>
+</p>
+
+<p class="tight-to-figure">
+We observe that the composition mistakes in 768² images and the reduced detail in 256² images are still evident when decoded with this simpler decoder:
+</p>
+
+<figure class="table-fig">
+  <table class="no-border-bottom">
+    <tbody>
+      <tr>
+        <th>Decoder</th>
+        <th colspan="8">Samples (768²)</th>
+      </tr>
+      <tr>
+        <td>VAE</td>
+        <td>{{<linked-img src="./images/768/vae/00368.86322125.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00369.340323845.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00370.340323845.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00371.436376137.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00372.436376137.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00373.580263270.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00374.580263270.sd1.5.regular768.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/vae/00383.715317074.sd1.5.regular768.png" width="75px" >}}</td>
+      </tr>
+      <tr>
+        <td>Approx</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00368.86322125.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00369.340323845.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00370.340323845.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00371.436376137.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00372.436376137.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00373.580263270.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00374.580263270.sd1.5.regular768.approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/768/approx_beeg/00383.715317074.sd1.5.regular768.approx.png" width="75px" >}}</td>
+      </tr>
+      <tr>
+        <th>Decoder</th>
+        <th colspan="8">Samples (256²)</th>
+      </tr>
+      <tr>
+        <td>VAE</td>
+        <td>{{<linked-img src="./images/256/vae/00307.436376137.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00308.436376137.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00310.580263270.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00313.830333947.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00316.1157730004.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00320.1385218415.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00321.1542102181.sd1.5.regular256.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/vae/00334.2106704619.sd1.5.regular256.png" width="75px" >}}</td>
+      </tr>
+      <tr>
+        <td>Approx</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00339.436376137.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00340.436376137.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00342.580263270.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00345.830333947.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00348.1157730004.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00352.1385218415.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00353.1542102181.sd1.5.regular256approx.png" width="75px" >}}</td>
+        <td>{{<linked-img src="./images/256/approx_beeg/00366.2106704619.sd1.5.regular256approx.png" width="75px" >}}</td>
+      </tr>
+    </tbody>
+  </table>
+</figure>
+
+<p>So, the problem does <strong>not</strong> lie with the <abbr title="Variational Autoencoder">VAE</abbr>.</p>
 
 <h3>Convolutions?</h3>
 
-Can convolutions be responsible for long-distance composition decisions?
+<p>Can convolutions be responsible for long-distance composition decisions?</p>
 
-Each resnet block in the Unet downsamples our latents; we undergo an 8x downsample by the time we reach the bottom. 64x64 latents become 8x8. At this size: a 3x3 convolution kernel can actually include quite a lot of image.
+<p>A 3x3 convolution kernel doesn't cover a large area, but its effective area increases as we descend the Unet (and resnet blocks downsample the latents).</p>
+
+<p>
+We undergo an 8x downsample by the time we reach the bottom. 64x64 latents become 8x8. At this size: a 3x3 convolution kernel can actually include quite a lot of image.
+</p>
 
 <figure class="table-fig">
   <table class="no-border-bottom">
     <thead>
       <tr>
         <th>Pixel size</th>
+        <th/>
         <th>512x512</th>
         <th>768x768</th>
       </tr>
       <tr>
-        <th>Latent size (top of Unet)</th>
+        <th rowspan="3">Latent size</th>
+        <th>Unet depth</th>
+        <th colspan="2"/>
+      </tr>
+      <tr>
+        <th>top</th>
         <th>64x64</th>
         <th>96x96</th>
       </tr>
       <tr>
-        <th>Latent size (bottom of Unet)</th>
+        <th>bottom</th>
         <th>8x8</th>
         <th>12x12</th>
       </tr>
@@ -357,7 +437,7 @@ Each resnet block in the Unet downsamples our latents; we undergo an 8x downsamp
     </thead>
     <tbody>
       <tr>
-        <td/>
+        <td colspan="2"/>
         <td>{{<linked-img src="./images/latents-approx-conv.miko.512.png" width="175px" alt="largest area covered by convolution kernel for this 512x512 close portrait, is about the size of a face." >}}</td>
         <td>{{<linked-img src="./images/latents-approx-conv.miko.768.png" width="175px" alt="largest area covered by convolution kernel for this 768x768 less-zoomed-in portrait is about the size of a head." >}}</td>
       </tr>
@@ -365,18 +445,22 @@ Each resnet block in the Unet downsamples our latents; we undergo an 8x downsamp
   </table>
   <figcaption>
     Area covered by 3x3 convolution kernel at deepest part of Unet
-    <div class="subcaption">
-      Latents decoded to pixels using an <a href="https://twitter.com/Birchlabs/status/1638680623110864898">approximate decoder</a> distilled from SD1.5's <abbr title="Variational Autoencoder">VAE</abbr>,<br>whose color-space conversion is not sensitive to sequence length.
-    </div>
   </figcaption>
 </figure>
 
-The convolution kernel doesn't include the whole image; it extracts features from a local neighbourhood. This enables <em>local</em> coherence (continuing the outline of a head), and a chance at long-distance coherence via transitivity (a head is followed by a neck is followed by a torso). But overall lacks the range to enforce "a head cannot be here because we already drew one elsewhere".
-
-The difference in distance (width or height) under the convolution kernel between our 512 and 768 image is only 50%. Stable-diffusion can draw subjects close or far from the camera, so perhaps it can tolerate a difference of this much.
-
-It's not enough to explain why <em>small</em> images get deep-fried. If the goal were "fit a body part into the kernel", then that's <em>easier</em> for small images.
-
+<p>
+  The convolution kernel doesn't include the whole image; it extracts features from a local neighbourhood. This enables <em>local</em> coherence (continuing the outline of a head), and a chance at long-distance coherence via transitivity (a head is followed by a neck is followed by a torso). But overall lacks the range to enforce "a head cannot be here because we already drew one elsewhere".
+</p>
+<p>
+  The difference in distance (width or height) under the convolution kernel between our 512 and 768 image is only 50%. Stable-diffusion can draw subjects close or far from the camera, so perhaps it can tolerate a difference of this much.
+</p>
+<p>
+  It's not enough to explain why <em>small</em> images get deep-fried. If the goal were "fit a body part into the kernel", then that's <em>easier</em> for small images.
+</p>
+<p>
+  Not ruling out convolutions as a possible culprit, but do not see a training-free solution.<br>
+  As for bigger images: deeper Unet?
+</p>
 
 <script>
   const checkboxIDs = ['baseline-512'];//, 'approx-768', 'approx-256'];
