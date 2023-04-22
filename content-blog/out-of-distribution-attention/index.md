@@ -9,6 +9,24 @@ contributors: ["EleutherAI"]
 categories: ["Announcement"]
 ---
 
+<script type="text/javascript">
+function onGumshoeLoad() {
+  gumshoe.init({
+    offset: 40,
+    activateAlso: function(domNode) {
+      return domNode.classList.contains('dropdown-item')
+      && domNode.parentNode
+      && domNode.parentNode.parentNode
+      && domNode.parentNode.parentNode.parentNode
+      && domNode.parentNode.parentNode.parentNode.firstElementChild;
+    }
+  });
+}
+</script>
+<script src="./gumshoe.5.1.1.min.js"></script>
+
+{{<link-scss href="style/scrollspy.scss">}}
+
 <style>
 figure {
   display: inline-block;
@@ -80,6 +98,19 @@ h4 {
   font-weight: lighter;
 }
 </style>
+
+<div data-gumshoe-header class="bs-docs-sidebar">
+  <ul data-gumshoe class="ss-nav">
+    <li class="ss-nav-item dropdown">
+      <a class="ss-nav-link dropdown-toggle" href="#vae">VAE?</a>
+      <ul class="dropdown-menu">
+        <li>
+          <a class="dropdown-item" href="#approx-decode">Decoding latents with an approximate decoder</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
 
 Does a diffusion model require retraining to generate images smaller or larger than those in its training set?
 
@@ -205,7 +236,7 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
   What makes stable-diffusion perform poorly at non-512² image sizes?
 </p>
 
-<h3><abbr title="Variational Autoencoder">VAE</abbr> decoder?</h3>
+<h3 id="vae"><abbr title="Variational Autoencoder">VAE</abbr> decoder?</h3>
 
 <p>
   Perhaps deformities and detail loss occur during when the <abbr title="Variational Autoencoder">VAE</abbr> decoder upsamples the image? Part of its job is to invent new detail; maybe it does this poorly for image sizes outside of its training distribution?
@@ -231,7 +262,7 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
   Let's eliminate the <abbr title="Variational Autoencoder">VAE</abbr> altogether. Is there another way to decode the latents, which we trust to not be sensitive to sequence length?
 </p>
 
-<h4>Decoding latents with an approximate decoder</h4>
+<h4 id="approx-decode">Decoding latents with an approximate decoder</h4>
 <details class="margin-bottom">
   <summary>We distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The model architecture is just 3 dense layers.</summary>
 

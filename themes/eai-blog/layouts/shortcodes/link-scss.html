@@ -1,0 +1,3 @@
+{{ $resource := .Page.Resources.GetMatch (.Get "href") }}
+{{ $style := $resource | resources.ToCSS | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}">
