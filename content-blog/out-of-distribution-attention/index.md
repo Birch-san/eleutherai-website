@@ -233,7 +233,7 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
 
 <h4>Decoding latents with an approximate decoder</h4>
 <details class="margin-bottom">
-  <summary>I distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The model architecture is just 3 dense layers.</summary>
+  <summary>We distilled an <a href="https://birchlabs.co.uk/machine-learning#vae-distillation">approximate decoder</a> from real <abbr title="Variational Autoencoder">VAE</abbr> decoding results (latent+image pairs). The model architecture is just 3 dense layers.</summary>
 
 ```python
 from torch.nn import Module, Linear, SiLU
@@ -392,15 +392,19 @@ We undergo an 8x downsample by the time we reach the bottom. 64x64 latents becom
 <p>
   The convolution kernel doesn't include the whole image; it extracts features from a local neighbourhood. This enables <em>local</em> coherence (continuing the outline of a head), and a chance at long-distance coherence via transitivity (a head is followed by a neck is followed by a torso). But overall lacks the range to enforce "a head cannot be here because we already drew one elsewhere".
 </p>
+
+<h4>Is convolution range the issue?</h4>
 <p>
-  The difference in distance (width or height) under the convolution kernel between our 512 and 768 image is only 50%. Stable-diffusion can draw subjects close or far from the camera, so perhaps it can tolerate a difference of this much.
+  The difference in distance (width or height) under the convolution kernel between our 512 and 768 image is only 50%. Stable-diffusion can draw subjects near or far from the camera; perhaps it can tolerate a difference of this much.
 </p>
 <p>
-  It's not enough to explain why <em>small</em> images get deep-fried. If the goal were "fit a body part into the kernel", then that's <em>easier</em> for small images.
+  Making the Unet deeper could make the convolutions longer-range (by downsampling the latent area more). However: we are seeking a <em>training-free</em> solution.
 </p>
 <p>
-  Not ruling out convolutions as a possible culprit, but do not see a training-free solution.<br>
-  As for bigger images: deeper Unet?
+  If <em>range</em> is the issue: why do <em>small</em> images suffer? If the only requirement were "fit a body part into the kernel", then we should've done fine on small images.
+</p>
+<p>
+  Convolution range may explain why the <em>composition</em> of 256² images remained strong. It <em>doesn't</em> explain their detail loss or why 200² images fell apart entirely.
 </p>
 
 <script>
