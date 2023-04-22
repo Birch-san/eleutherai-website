@@ -14,7 +14,6 @@ figure {
   display: inline-block;
 }
 figure.table-fig {
-/*  margin-top: initial;*/
   margin-top: 0;
   margin-bottom: 0.5em;
 }
@@ -133,17 +132,10 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
   <strong>768²</strong> images exhibit "double-body" or other deformations:
 </p>
 
-<!-- <small><label class="toggle"><input type="checkbox" id="approx-768">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.</small> -->
-
 <figure class="table-fig">
   <table class="no-border-bottom">
     <tbody>
       <tr>
-        <!-- <td>
-          Decoder:<br>
-          <label><input type="radio" name="768-decoder" value="VAE" checked>VAE</label><br>
-          <label><input type="radio" name="768-decoder" value="approx">Approx</label>
-        </td> -->
         <td>{{<linked-img src="./images/768/vae/00368.86322125.sd1.5.regular768.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/768/vae/00369.340323845.sd1.5.regular768.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/768/vae/00370.340323845.sd1.5.regular768.png" width="75px" >}}</td>
@@ -165,12 +157,6 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
       </tr>
     </tbody>
   </table>
-  <!-- <figcaption>
-    768x768 samples: most exhibit "double-body" or other deformation.<br>
-    <div class="subcaption">
-      <label class="toggle"><input type="checkbox" id="approx-768">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.
-    </div>
-  </figcaption> -->
 </figure>
 
 <p class="tight-to-figure">
@@ -192,26 +178,16 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
       </tr>
     </tbody>
   </table>
-  <!-- <figcaption>
-    512x512 samples: bodies generally coherent (go easy on the hands!)<br>
-  </figcaption> -->
 </figure>
 
 <p class="tight-to-figure">
   <strong>256²</strong> images lack detail and have odd colours, but have reasonable composition:
 </p>
 
-<!-- <small><label class="toggle"><input type="checkbox" id="approx-256">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.</small> -->
-
 <figure class="table-fig">
   <table class="no-border-bottom">
     <tbody>
       <tr>
-        <!-- <td>
-          Decoder:<br>
-          <label><input type="radio" name="256-decoder" value="VAE" checked>VAE</label><br>
-          <label><input type="radio" name="256-decoder" value="approx">Approx</label>
-        </td> -->
         <td>{{<linked-img src="./images/256/vae/00307.436376137.sd1.5.regular256.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/256/vae/00308.436376137.sd1.5.regular256.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/256/vae/00310.580263270.sd1.5.regular256.png" width="75px" >}}</td>
@@ -221,47 +197,16 @@ It seems so, judging by <a href="https://en.wikipedia.org/wiki/Stable_Diffusion"
         <td>{{<linked-img src="./images/256/vae/00321.1542102181.sd1.5.regular256.png" width="75px" >}}</td>
         <td>{{<linked-img src="./images/256/vae/00334.2106704619.sd1.5.regular256.png" width="75px" >}}</td>
       </tr>
-      <tr id="approx-256-target" class="hidden">
-        <td>{{<linked-img src="./images/256/approx_beeg/00339.436376137.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00340.436376137.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00342.580263270.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00345.830333947.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00348.1157730004.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00352.1385218415.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00353.1542102181.sd1.5.regular256approx.png" width="75px" >}}</td>
-        <td>{{<linked-img src="./images/256/approx_beeg/00366.2106704619.sd1.5.regular256approx.png" width="75px" >}}</td>
-      </tr>
     </tbody>
   </table>
-  <!-- <figcaption>
-    256x256 samples: correctly-composed, but detail-impaired.
-    <div class="subcaption">
-      <label class="toggle"><input type="checkbox" id="approx-256">Show approx decodes</label>, to see that problem is <strong>not</strong> caused by the <abbr title="Variational Autoencoder">VAE</abbr>.
-    </div> 
-  </figcaption>-->
 </figure>
 
 <p>
   What makes stable-diffusion perform poorly at non-512² image sizes?
 </p>
-<!-- Is it sensitive to image dimensions, sequence length, or distance between features? -->
 
 <h3><abbr title="Variational Autoencoder">VAE</abbr> decoder?</h3>
 
-<!-- <details>
-  <summary><em>Background: what is the role of the <abbr title="Variational Autoencoder">VAE</abbr> decoder in latent diffusion?</em></summary>
-  <p>
-    Stable-diffusion is a <a href="https://arxiv.org/abs/2112.10752">latent diffusion</a> model. Where a typical diffusion model removes noise from noised <em>pixels</em>: latent diffusion models remove noise from noised <em>latents</em> — a <em>learned downsample</em> of pixels. This reduces the dimensionality of the denoising problem.
-  </p>
-  <p>
-    To produce a 512x512 image:
-  </p>
-  <ul>
-    <li>We start by generating 64x64, 4-channel noise (noised latents).</li>
-    <li>The Unet (and our ODE solver) iteratively remove portions of the noise from these noised latents, until we have fully-denoised latents.</li>
-    <li>We pass our latents to the <abbr title="Variational Autoencoder">VAE</abbr> decoder, which upsamples them to a 512x512 RGB image.</li>
-  </ul>
-</details> -->
 <p>
   Perhaps deformities and detail loss occur during when the <abbr title="Variational Autoencoder">VAE</abbr> decoder upsamples the image? Part of its job is to invent new detail; maybe it does this poorly for image sizes outside of its training distribution?
 </p>
@@ -463,7 +408,7 @@ We undergo an 8x downsample by the time we reach the bottom. 64x64 latents becom
 </p>
 
 <script>
-  const checkboxIDs = ['baseline-512'];//, 'approx-768', 'approx-256'];
+  const checkboxIDs = ['baseline-512'];
   for (const checkboxID of checkboxIDs) {
     const targetID = `${checkboxID}-target`;
     document.getElementById(checkboxID).addEventListener('change', (event) => {
