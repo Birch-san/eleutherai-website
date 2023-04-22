@@ -360,17 +360,13 @@ We undergo an 8x downsample by the time we reach the bottom. 64x64 latents becom
         <th>768x768</th>
       </tr>
       <tr>
-        <th rowspan="3">Latent size</th>
-        <th>Unet depth</th>
-        <th colspan="2"/>
-      </tr>
-      <tr>
-        <th>top</th>
+        <th rowspan="2">Latent size</th>
+        <th>top of Unet</th>
         <th>64x64</th>
         <th>96x96</th>
       </tr>
       <tr>
-        <th>bottom</th>
+        <th>bottom of Unet</th>
         <th>8x8</th>
         <th>12x12</th>
       </tr>
