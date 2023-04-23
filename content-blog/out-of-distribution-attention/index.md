@@ -60,6 +60,10 @@ details.margin-bottom {
   margin-bottom: 1em;
 }
 
+.margin-left {
+  margin-left: 1.7em;
+}
+
 .toggle {
   color: lightcoral;
   user-select: none;
@@ -80,6 +84,20 @@ h4 {
   font-weight: lighter;
 }
 </style>
+
+<!-- TODO: refactor into partial layout -->
+<link rel="stylesheet" href="./style/katex@0.16.6/katex.min.css" integrity="sha384-mXD7x5S50Ko38scHSnD4egvoExgMPbrseZorkbE49evAfv9nNcbrXJ8LLNsDgh9d">
+
+<script>
+function katexLoaded() {
+  katex.render('{\\text{Attention}}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^{T}}{\\sqrt{d_k}}\\right)V', document.getElementById('katex-softmax'), {
+    throwOnError: false
+  });
+}
+</script>
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer onload="katexLoaded()" src="./js/katex@0.16.6/katex.min.js" integrity="sha384-j/ZricySXBnNMJy9meJCtyXTKMhIJ42heyr7oAdxTDBy/CYA9hzpMo+YTNV5C+1X"></script>
 
 Does a diffusion model require retraining to generate images smaller or larger than those in its training set?
 
@@ -406,6 +424,35 @@ We undergo an 8x downsample by the time we reach the bottom. 64x64 latents becom
 <p>
   Convolution range may explain why the <em>composition</em> of 256² images remained strong. It <em>doesn't</em> explain their detail loss or why 200² images fell apart entirely.
 </p>
+
+<h3>Self-attention?</h3>
+
+<details class="margin-bottom">
+  <summary>
+    Self-<a href="https://arxiv.org/abs/1706.03762">attention</a> is used to decide latents' values by referring to other relevant latents in the image, at any distance.
+  </summary>
+  <p>
+    Introduced in <a href="https://arxiv.org/abs/1409.0473">[…] Learning to Align and Translate</a>, attention was popularised by <a href="https://arxiv.org/abs/1706.03762">Attention is All You Need</a>, which laid out the transformer architecture responsible for our current era of machine learning.
+  </p>
+  <p>
+    Given a source and target sequence: the model learns projections query, key and value.<br>
+    Q extracts features from the source sequence. K and V extract features from the target sequence.
+  </p>
+  <p>
+    Attention seeks to find for each query token in Q, its most relevant key tokens in K, then apply their corresponding values.
+  </p>
+  <p>
+    In self-attention: source and target will be the same — each part of the (latent) image decides how to change, by referring to the entire image.
+  </p>
+</details>
+
+<p class="tight-to-figure">
+  A sensitive part of the attention mechanism is the <a href="https://en.wikipedia.org/wiki/Softmax_function"><code>softmax</code></a> applied over the attention scores:
+</p>
+
+<div id="katex-softmax" class="margin-left">
+  <pre>Attention(Q,K,V) = softmax(Q⋅K.T/sqrt(head_dims))⋅V</pre>
+</div>
 
 <script>
   const checkboxIDs = ['baseline-512'];
